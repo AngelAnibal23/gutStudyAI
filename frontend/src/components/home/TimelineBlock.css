@@ -1,0 +1,236 @@
+.tblock {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  transition: var(--transition);
+}
+
+.tblock--done { opacity: 0.38; }
+
+/* Rail de color */
+.tblock-rail {
+  width: 2px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  min-height: 100%;
+}
+
+.tblock-rail--lime  { background: var(--lime); }
+.tblock-rail--blue  { background: var(--blue); }
+.tblock-rail--muted { background: var(--text-muted); }
+.tblock-rail--dim   { background: var(--text-dim); }
+
+/* Hora */
+.tblock-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 80px;
+  padding-top: 14px;
+  flex-shrink: 0;
+}
+
+.tblock-hora {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1;
+}
+
+.tblock-sep {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  line-height: 1;
+}
+
+/* Card */
+.tblock-card {
+  flex: 1;
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 13px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  transition: var(--transition);
+  margin-bottom: 6px;
+}
+
+.tblock-card:hover {
+  border-color: var(--border-hover);
+}
+
+.tblock--active .tblock-card {
+  box-shadow: 0 0 0 1px var(--lime-border-strong), 0 0 24px var(--lime-glow);
+  border-color: var(--lime-border);
+}
+
+/* Fila principal dentro de la card */
+.tblock-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tblock-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.tblock-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Acciones (start + check) */
+.tblock-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Botón play — aparece al hover de la card */
+.tblock-start {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 0.5px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  display: grid;
+  place-items: center;
+  transition: var(--transition);
+  opacity: 0;
+  flex-shrink: 0;
+}
+.tblock-card:hover .tblock-start {
+  opacity: 1;
+}
+.tblock-start:hover {
+  border-color: var(--lime-border-strong);
+  background: var(--lime-glow);
+  color: var(--lime-dim);
+}
+
+.tblock-actividad {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tblock-dur {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Checkbox */
+.tblock-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 1px solid var(--border-hover);
+  background: transparent;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.tblock-check:hover {
+  border-color: var(--lime-border-strong);
+  background: var(--lime-glow);
+}
+
+.tblock-check--done {
+  background: var(--lime);
+  border-color: var(--lime);
+}
+
+/* ── Timer inline ─────────────────────────────────────────── */
+.tblock-timer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  margin-top: 10px;
+  border-top: 0.5px solid var(--border-subtle);
+}
+
+.tblock-timer-track {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.tblock-timer-fill {
+  height: 100%;
+  background: var(--lime-dim);
+  border-radius: 99px;
+  transition: width 1s linear;
+}
+
+.tblock-timer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tblock-timer-mm {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--lime-bright);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  transition: color 300ms ease;
+}
+.tblock-timer-mm--done {
+  color: var(--lime);
+}
+
+.tblock-timer-btns {
+  display: flex;
+  gap: 4px;
+}
+
+.timer-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 0.5px solid var(--border-hover);
+  background: transparent;
+  color: var(--text-secondary);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+.timer-btn:hover {
+  background: rgba(190, 242, 100, 0.08);
+  border-color: var(--lime-border-strong);
+  color: var(--lime);
+}
+.timer-btn--stop:hover {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--danger);
+}
+
+/* Card activa con timer: borde lime más pronunciado */
+.tblock--timer .tblock-card {
+  border-color: var(--lime-border-strong);
+  box-shadow: 0 0 0 1px var(--lime-border), 0 0 32px var(--lime-glow);
+}

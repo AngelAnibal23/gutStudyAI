@@ -1,0 +1,132 @@
+.smodal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  animation: soverlay-in 200ms ease forwards;
+}
+
+@keyframes soverlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.smodal {
+  position: relative;
+  width: 340px;
+  background: #0B1220;
+  border: 0.5px solid rgba(59, 130, 246, 0.35);
+  border-radius: 20px;
+  padding: 40px 32px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.08),
+    0 24px 64px rgba(0, 0, 0, 0.7),
+    0 0 80px rgba(59, 130, 246, 0.12);
+  overflow: hidden;
+  animation: smodal-in 260ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes smodal-in {
+  from { opacity: 0; transform: scale(0.88) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Glow de fondo */
+.smodal::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Icono */
+.smodal-icon-wrap {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.smodal-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(59, 130, 246, 0.5);
+  background: rgba(59, 130, 246, 0.1);
+  animation: sring-pulse 2s ease-in-out infinite;
+}
+
+@keyframes sring-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.3); }
+  50%       { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+}
+
+.smodal-check {
+  color: #60A5FA;
+  position: relative;
+  z-index: 1;
+  animation: scheck-in 300ms 100ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes scheck-in {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Texto */
+.smodal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #E2E8F0;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+
+.smodal-desc {
+  font-size: 13px;
+  color: #64748B;
+  line-height: 1.6;
+  max-width: 240px;
+}
+
+/* Barra de progreso */
+.smodal-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background: rgba(59, 130, 246, 0.15);
+  border-radius: 0 0 20px 20px;
+  overflow: hidden;
+}
+
+.smodal-bar::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #3B82F6, #60A5FA);
+  transform-origin: left;
+  animation: sbar-drain 2.8s linear forwards;
+}
+
+@keyframes sbar-drain {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}

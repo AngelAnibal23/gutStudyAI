@@ -1,0 +1,312 @@
+.historial-page {
+  padding: 48px 48px 80px;
+  max-width: 860px;
+}
+
+/* Header */
+.historial-header {
+  margin-bottom: 28px;
+}
+
+.historial-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.historial-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Estado vacío / cargando */
+.he-wrap {
+  padding: 40px 0;
+}
+.he-wrap--empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 80px 40px;
+  text-align: center;
+}
+.he-icon {
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.he-msg {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.he-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.he-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 340px;
+  line-height: 1.6;
+}
+
+/* ── Lista de días ─────────────────────────────────────── */
+.historial-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Card de un día ────────────────────────────────────── */
+.hdia {
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 150ms ease;
+}
+.hdia:hover {
+  border-color: var(--border-hover);
+}
+.hdia--open {
+  border-color: var(--border-hover);
+}
+
+/* Header del día (botón clickeable) */
+.hdia-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+.hdia-header:hover {
+  background: var(--hover-bg-subtle);
+}
+
+/* Fecha */
+.hdia-date {
+  display: flex;
+  flex-direction: column;
+  width: 52px;
+  flex-shrink: 0;
+}
+.hdia-dow {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.hdia-dm {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Barra de progreso central */
+.hdia-center {
+  flex: 1;
+  min-width: 0;
+}
+.hdia-track {
+  height: 3px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.hdia-fill {
+  height: 100%;
+  background: var(--lime-dim);
+  border-radius: 99px;
+  transition: width 400ms ease;
+}
+.hdia-fill--full {
+  background: var(--lime);
+}
+
+/* Stats derechas */
+.hdia-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.hdia-fraction {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.hdia-pct {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 34px;
+  text-align: right;
+}
+.hdia-pct--full {
+  color: var(--lime);
+}
+
+.hdia-crisis-tag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border: 0.5px solid var(--danger-border);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Chevron */
+.hdia-chevron {
+  flex-shrink: 0;
+  color: var(--text-dim);
+  transition: transform 200ms ease;
+}
+.hdia-chevron--up {
+  transform: rotate(180deg);
+}
+
+/* ── Zona expandible ───────────────────────────────────── */
+.hdia-tasks {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms ease;
+}
+.hdia--open .hdia-tasks {
+  grid-template-rows: 1fr;
+}
+
+.hdia-tasks-inner {
+  overflow: hidden;
+}
+
+.hdia-tasks-empty {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 12px 18px 16px;
+}
+
+/* ── Tarea individual ──────────────────────────────────── */
+.htarea {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 18px;
+  border-top: 0.5px solid var(--border-subtle);
+  transition: background 120ms ease;
+}
+.htarea:hover {
+  background: var(--hover-bg-subtle);
+}
+
+.htarea-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.htarea-icon--check {
+  background: rgba(190, 242, 100, 0.12);
+  border: 0.5px solid var(--lime-border);
+  color: var(--lime-dim);
+}
+.htarea-icon--x {
+  background: var(--danger-bg);
+  border: 0.5px solid var(--danger-border);
+  color: var(--danger);
+}
+
+.htarea-body {
+  flex: 1;
+  min-width: 0;
+}
+.htarea-nombre {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.htarea--missed .htarea-nombre {
+  color: var(--text-secondary);
+}
+.htarea-meta {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 1px;
+}
+
+.htarea-notas {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-top: 3px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.htarea-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.htarea-tiempo {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.htarea-post {
+  font-size: 12px;
+  color: var(--text-dim);
+  title: 'Fue postergada';
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .historial-page {
+    padding: 24px 16px 24px;
+  }
+  .hdia-header {
+    gap: 10px;
+    padding: 12px 14px;
+  }
+  .hdia-date {
+    width: 44px;
+  }
+  .htarea {
+    padding: 10px 14px;
+  }
+}

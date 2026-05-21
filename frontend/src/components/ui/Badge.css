@@ -1,0 +1,16 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.badge--muted  { background: rgba(61,74,42,0.5);    color: var(--text-secondary); }
+.badge--lime   { background: rgba(163,230,53,0.12);  color: var(--accent-lime);    }
+.badge--blue   { background: rgba(37,99,235,0.15);   color: #60A5FA;               }
+.badge--amber  { background: rgba(245,158,11,0.15);  color: var(--amber);          }
+.badge--red    { background: rgba(220,38,38,0.15);   color: var(--red);            }

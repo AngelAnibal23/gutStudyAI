@@ -1,0 +1,29 @@
+.dia-toggles {
+  display: flex;
+  gap: 6px;
+}
+
+.dia-chip {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  border: 0.5px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+  transition: var(--transition);
+}
+
+.dia-chip:hover {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.dia-chip--active {
+  background: rgba(190, 242, 100, 0.12);
+  border-color: rgba(190, 242, 100, 0.3);
+  color: var(--lime);
+}

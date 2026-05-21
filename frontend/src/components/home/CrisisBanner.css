@@ -1,0 +1,53 @@
+.crisis-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--danger-bg);
+  border: 0.5px solid var(--danger-border);
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.crisis-icon {
+  color: var(--danger);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.crisis-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.crisis-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--danger);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 2px;
+}
+
+.crisis-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.crisis-text + .crisis-text {
+  margin-top: 3px;
+}
+
+.crisis-action {
+  font-size: 12px;
+  color: var(--danger);
+  white-space: nowrap;
+  opacity: 0.85;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.crisis-action:hover { opacity: 1; }

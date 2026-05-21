@@ -1,0 +1,43 @@
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-main {
+  margin-left: var(--sidebar-width-active);
+  flex: 1;
+  min-height: 100vh;
+  transition: margin-left 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Botón flotante de tema — solo en móvil */
+.theme-fab {
+  display: none;
+  position: fixed;
+  bottom: 72px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 0.5px solid var(--border-hover);
+  color: var(--text-secondary);
+  place-items: center;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+  transition: var(--transition);
+}
+.theme-fab:hover {
+  border-color: var(--lime-border-strong);
+  color: var(--lime-dim);
+}
+
+@media (max-width: 768px) {
+  .app-main {
+    margin-left: 0;
+    padding-bottom: 64px;
+  }
+  .theme-fab {
+    display: grid;
+  }
+}

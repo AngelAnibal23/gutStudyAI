@@ -1,0 +1,39 @@
+# ── Dependencies ─────────────────────────────────────────────
+backend/node_modules/
+frontend/node_modules/
+
+# ── Build output (hosting platforms run the build themselves) ─
+frontend/dist/
+frontend/dist-ssr/
+frontend/build/
+
+# ── Secrets — NEVER commit ───────────────────────────────────
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+!**/.env.example
+
+# ── Logs ─────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ── Cache / tooling ──────────────────────────────────────────
+.cache/
+frontend/.vite/
+**/.parcel-cache/
+coverage/
+*.tsbuildinfo
+*.local
+
+# ── OS ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Editor ───────────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Badge from '../components/ui/Badge';
 import TaskDrawer from '../components/ui/TaskDrawer';
 import SuccessModal from '../components/ui/SuccessModal';
+import ImportModal from '../components/ui/ImportModal';
 import DrawerSelect from '../components/ui/DrawerSelect';
 import { useToast } from '../components/ui/Toast';
 import './Tareas.css';
@@ -60,9 +61,16 @@ export default function Tareas() {
   const [busqueda, setBusqueda] = useState('');
   const [mostrarCompletadas, setMostrarCompletadas] = useState(false);
   const [successModal, setSuccessModal] = useState({ show: false, title: '', desc: '' });
+  const [importOpen, setImportOpen] = useState(false);
   const toast = useToast();
 
   const closeSuccess = useCallback(() => setSuccessModal(s => ({ ...s, show: false })), []);
+
+  async function handleImportSuccess(count) {
+    const [tareasData] = await Promise.all([fetch(`${API}/tareas`).then(r => r.json())]);
+    if (Array.isArray(tareasData)) setTareas(tareasData);
+    setSuccessModal({ show: true, title: '¡Importación completada!', desc: `${count} tarea${count !== 1 ? 's' : ''} añadida${count !== 1 ? 's' : ''} correctamente.` });
+  }
 
   useEffect(() => {
     Promise.all([
@@ -145,13 +153,23 @@ export default function Tareas() {
           <h1 className="tareas-title">Mis tareas</h1>
           <p className="tareas-sub">{tareas.length} tarea{tareas.length !== 1 ? 's' : ''} en total</p>
         </div>
-        <button className="btn-new" onClick={() => setDrawerOpen(true)}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Nueva tarea
-        </button>
+        <div className="header-actions">
+          <button className="btn-import" onClick={() => setImportOpen(true)}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Importar CSV
+          </button>
+          <button className="btn-new" onClick={() => setDrawerOpen(true)}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Nueva tarea
+          </button>
+        </div>
       </div>
 
       <div className="filtros-bar">
@@ -316,6 +334,13 @@ export default function Tareas() {
         cursos={cursos}
         initialValues={editingTarea}
         isEdit={editingTarea !== null}
+      />
+
+      <ImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        cursos={cursos}
+        onSuccess={handleImportSuccess}
       />
 
       <SuccessModal

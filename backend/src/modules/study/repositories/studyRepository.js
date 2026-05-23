@@ -167,6 +167,25 @@ async function actualizarTarea(id, { nombre, curso_id, tipo, fecha_entrega, difi
   return data;
 }
 
+async function insertarTareasBulk(tareas) {
+  const { data, error } = await supabase
+    .from('tareas')
+    .insert(tareas.map(t => ({
+      nombre: t.nombre,
+      curso_id: t.curso_id || null,
+      tipo: t.tipo,
+      fecha_entrega: t.fecha_entrega,
+      dificultad: t.dificultad,
+      tiempo_estimado: t.tiempo_estimado,
+      notas: t.notas || null,
+      estado: 'pendiente',
+      veces_postergada: 0,
+    })))
+    .select('*, cursos(nombre)');
+  if (error) throw error;
+  return data;
+}
+
 async function actualizarEstadoTarea(id, estado) {
   const campos = { estado };
   if (estado === 'completada') campos.veces_postergada = 0;
@@ -284,6 +303,7 @@ module.exports = {
   actualizarCompletada,
   getTareas,
   crearTarea,
+  insertarTareasBulk,
   eliminarTarea,
   actualizarTarea,
   actualizarEstadoTarea,

@@ -166,12 +166,19 @@ async function generarDia() {
   if (!match) throw new Error('La IA no devolvió JSON válido');
   const programacion = JSON.parse(match[0]);
 
-  // Forzar tiempo_asignado al valor real de la tarea (la IA a veces no lo respeta)
+  // Forzar tiempo_asignado y actividad con los valores reales de la tarea
   const tiempoMap = new Map(tareasActualizadas.map(t => [t.id, t.tiempo_estimado]));
+  const nombreMap = new Map(tareasActualizadas.map(t => [t.id, t.nombre]));
   programacion.bloques = programacion.bloques.map(b => {
     if (!b.tarea_id) return b;
-    const esperado = tiempoMap.get(Number(b.tarea_id));
-    return esperado != null ? { ...b, tiempo_asignado: esperado } : b;
+    const id = Number(b.tarea_id);
+    const esperado = tiempoMap.get(id);
+    const nombre   = nombreMap.get(id);
+    return {
+      ...b,
+      ...(esperado != null ? { tiempo_asignado: esperado } : {}),
+      ...(nombre    != null ? { actividad: nombre }        : {}),
+    };
   });
 
   const tareaIds = new Set(tareasActualizadas.map((t) => t.id));
@@ -272,12 +279,19 @@ async function ejecutarCrisisAction(accion) {
   if (!match) throw new Error('La IA no devolvió JSON válido');
   const programacion = JSON.parse(match[0]);
 
-  // Forzar tiempo_asignado al valor real de la tarea
+  // Forzar tiempo_asignado y actividad con los valores reales de la tarea
   const tiempoMapCrisis = new Map(tareas.map(t => [t.id, t.tiempo_estimado]));
+  const nombreMapCrisis = new Map(tareas.map(t => [t.id, t.nombre]));
   programacion.bloques = programacion.bloques.map(b => {
     if (!b.tarea_id) return b;
-    const esperado = tiempoMapCrisis.get(Number(b.tarea_id));
-    return esperado != null ? { ...b, tiempo_asignado: esperado } : b;
+    const id = Number(b.tarea_id);
+    const esperado = tiempoMapCrisis.get(id);
+    const nombre   = nombreMapCrisis.get(id);
+    return {
+      ...b,
+      ...(esperado != null ? { tiempo_asignado: esperado } : {}),
+      ...(nombre    != null ? { actividad: nombre }        : {}),
+    };
   });
 
   const tareaIdsSet = new Set(tareas.map(t => t.id));

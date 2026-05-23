@@ -27,6 +27,42 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.post('/bulk', async (req, res) => {
+  const { tareas } = req.body;
+  if (!Array.isArray(tareas) || tareas.length === 0) {
+    return res.status(400).json({ error: 'Se requiere un array de tareas no vacío' });
+  }
+
+  const CAMPOS = ['nombre', 'tipo', 'fecha_entrega', 'dificultad', 'tiempo_estimado'];
+  const DIFICULTADES = ['baja', 'media', 'alta'];
+  const FECHA_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+  const errores = [];
+  const validas = [];
+
+  tareas.forEach((t, i) => {
+    const fila = i + 2; // +2 porque fila 1 es el header del CSV
+    const missing = CAMPOS.filter(f => !t[f] && t[f] !== 0);
+    if (missing.length) { errores.push({ fila, error: `Faltan campos: ${missing.join(', ')}` }); return; }
+    if (!DIFICULTADES.includes(t.dificultad)) { errores.push({ fila, error: `dificultad inválida: "${t.dificultad}". Debe ser baja, media o alta` }); return; }
+    if (!FECHA_RE.test(t.fecha_entrega)) { errores.push({ fila, error: `fecha_entrega inválida: "${t.fecha_entrega}". Formato esperado: YYYY-MM-DD` }); return; }
+    const mins = Number(t.tiempo_estimado);
+    if (!Number.isInteger(mins) || mins <= 0) { errores.push({ fila, error: `tiempo_estimado debe ser un número entero positivo` }); return; }
+    validas.push({ ...t, tiempo_estimado: mins });
+  });
+
+  if (validas.length === 0) {
+    return res.status(400).json({ insertadas: 0, errores });
+  }
+
+  try {
+    const insertadas = await repo.insertarTareasBulk(validas);
+    res.status(201).json({ insertadas: insertadas.length, errores });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 router.delete('/:id', async (req, res) => {
   try {
     await repo.eliminarTarea(req.params.id);

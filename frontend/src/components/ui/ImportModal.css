@@ -1,0 +1,262 @@
+.imodal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  animation: ioverlay-in 180ms ease forwards;
+}
+@keyframes ioverlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.imodal {
+  width: min(680px, 94vw);
+  max-height: 90vh;
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: imodal-in 240ms cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+}
+@keyframes imodal-in {
+  from { opacity: 0; transform: scale(0.94) translateY(10px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);    }
+}
+
+/* ── Header ─────────────────────────────────── */
+.imodal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 24px 16px;
+  border-bottom: 0.5px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+.imodal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+.imodal-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.imodal-close {
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: 6px;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+.imodal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+/* ── Dropzone ────────────────────────────────── */
+.imodal-dropzone {
+  margin: 20px 24px;
+  border: 1.5px dashed var(--border);
+  border-radius: 14px;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease;
+  background: rgba(255, 255, 255, 0.01);
+}
+.imodal-dropzone:hover,
+.imodal-dropzone--over {
+  border-color: var(--lime-border-strong);
+  background: var(--lime-glow);
+}
+.imodal-upload-icon {
+  color: var(--text-muted);
+  transition: color 180ms ease;
+}
+.imodal-dropzone:hover .imodal-upload-icon,
+.imodal-dropzone--over .imodal-upload-icon {
+  color: var(--lime-dim);
+}
+.imodal-drop-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.imodal-drop-text span {
+  color: var(--lime-dim);
+  font-weight: 500;
+}
+.imodal-drop-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ── Stats pills ─────────────────────────────── */
+.imodal-stats {
+  display: flex;
+  gap: 8px;
+  padding: 0 24px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+.imodal-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 99px;
+}
+.imodal-stat--ok  { background: var(--lime-glow); color: var(--lime-dim); border: 0.5px solid var(--lime-border); }
+.imodal-stat--err { background: rgba(220,38,38,0.1); color: var(--red); border: 0.5px solid rgba(220,38,38,0.2); }
+
+/* ── Preview table ───────────────────────────── */
+.imodal-table-wrap {
+  overflow: auto;
+  flex: 1;
+  margin: 0 24px;
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+}
+.imodal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.imodal-table thead th {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 8px 10px;
+  text-align: left;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 0.5px solid var(--border);
+  white-space: nowrap;
+}
+.imodal-table tbody tr {
+  border-bottom: 0.5px solid var(--border-subtle);
+}
+.imodal-table tbody tr:last-child { border-bottom: none; }
+.imodal-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+.imodal-table tbody td {
+  padding: 8px 10px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.irow--err td { background: rgba(220,38,38,0.04); }
+.irow-idx   { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); width: 30px; }
+.irow-dim   { color: var(--text-muted); }
+.irow-mono  { font-family: var(--font-mono); font-size: 11px; }
+.irow-empty { color: var(--text-dim); }
+.irow-error-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  color: var(--red);
+  white-space: nowrap;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Result screen ───────────────────────────── */
+.imodal-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 36px 24px 20px;
+}
+.imodal-result-ok {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.imodal-result-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--lime-glow);
+  border: 1px solid var(--lime-border);
+  display: grid;
+  place-items: center;
+  color: var(--lime-dim);
+}
+.imodal-result-count {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+.imodal-result-warn {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.imodal-result-err {
+  font-size: 13px;
+  color: var(--red);
+  text-align: center;
+}
+
+/* ── Footer ──────────────────────────────────── */
+.imodal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 24px 18px;
+  flex-shrink: 0;
+}
+.imodal-btn-ghost {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  padding: 8px 14px;
+  border-radius: 8px;
+  transition: var(--transition);
+}
+.imodal-btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.imodal-btn-primary {
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--lime);
+  color: #000;
+  padding: 8px 18px;
+  border-radius: 8px;
+  transition: var(--transition);
+}
+.imodal-btn-primary:hover:not(:disabled) { background: var(--lime-dim); }
+.imodal-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Template link ───────────────────────────── */
+.imodal-template-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 0 24px 16px;
+  transition: color 160ms ease;
+  align-self: flex-start;
+}
+.imodal-template-link:hover { color: var(--lime-dim); }

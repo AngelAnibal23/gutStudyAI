@@ -85,12 +85,41 @@ export default function Home({ programacion, setProgramacion, checks, setChecks 
   useEffect(() => {
     if (timer?.running !== false || !timerDoneRef.current) return;
     timerDoneRef.current = false;
+    playTimerDone();
+    notifyTimerDone(timer.bloque?.actividad);
     if (!checksRef.current[timer.key]) toggleCheck(timer.bloqueIdx, timer.bloque);
     setTimer(null);
   }, [timer?.running]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  function playTimerDone() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.22, 0.44].forEach(offset => {
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.28, ctx.currentTime + offset);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.18);
+        osc.start(ctx.currentTime + offset);
+        osc.stop(ctx.currentTime + offset + 0.18);
+      });
+    } catch {}
+  }
+
+  function notifyTimerDone(actividad) {
+    if (Notification.permission !== 'granted') return;
+    new Notification('gutStudy — ¡Tiempo!', {
+      body: actividad ? `Completaste: ${actividad}` : 'Bloque de estudio finalizado',
+      icon: '/logo/gutStudyLOGO.jpg',
+    });
+  }
+
   function startTimer(key, mins, bloqueIdx, bloque) {
     if (!mins || mins <= 0) return;
+    if (Notification.permission === 'default') Notification.requestPermission();
     setTimer({ key, remaining: mins * 60, total: mins * 60, running: true, bloqueIdx, bloque });
   }
   function pauseTimer()  { setTimer(p => p ? { ...p, running: false } : null); }

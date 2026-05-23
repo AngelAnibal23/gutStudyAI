@@ -12,6 +12,7 @@ const FILTROS = [
   { key: 'todas',      label: 'Todas' },
   { key: 'pendiente',  label: 'Pendiente' },
   { key: 'en_riesgo',  label: 'En riesgo' },
+  { key: 'vencida',    label: 'Vencida' },
   { key: 'crisis',     label: 'Crisis' },
   { key: 'completada', label: 'Completada' },
 ];
@@ -34,6 +35,7 @@ function estadoVariant(t) {
   if (t.estado === 'completada') return 'completada';
   if (t.veces_postergada >= 3) return 'crisis';
   const dias = Math.ceil((new Date(t.fecha_entrega + 'T12:00:00') - new Date()) / 86400000);
+  if (dias < 0)  return 'vencida';
   if (dias <= 2) return 'en_riesgo';
   return 'pendiente';
 }
@@ -55,6 +57,7 @@ export default function Tareas() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingTarea, setEditingTarea] = useState(null);
   const [confirmingId, setConfirmingId] = useState(null);
+  const [busqueda, setBusqueda] = useState('');
   const [mostrarCompletadas, setMostrarCompletadas] = useState(false);
   const [successModal, setSuccessModal] = useState({ show: false, title: '', desc: '' });
   const toast = useToast();
@@ -120,6 +123,7 @@ export default function Tareas() {
     if (filtroEstado !== 'todas' && estadoVariant(t) !== filtroEstado) return false;
     if (filtroCurso && t.curso_id !== parseInt(filtroCurso)) return false;
     if (filtroEstado === 'todas' && !mostrarCompletadas && t.estado === 'completada') return false;
+    if (busqueda && !t.nombre.toLowerCase().includes(busqueda.toLowerCase())) return false;
     return true;
   });
 
@@ -165,14 +169,36 @@ export default function Tareas() {
             </button>
           ))}
         </div>
-        <DrawerSelect
-          value={filtroCurso}
-          onChange={v => setFiltroCurso(v)}
-          options={[
-            { value: '', label: 'Todos los cursos' },
-            ...cursos.map(c => ({ value: c.id, label: c.nombre })),
-          ]}
-        />
+
+        <div className="filtros-right">
+          <div className="search-wrap">
+            <svg className="search-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              className="search-input"
+              type="text"
+              placeholder="Buscar tarea…"
+              value={busqueda}
+              onChange={e => setBusqueda(e.target.value)}
+            />
+            {busqueda && (
+              <button className="search-clear" onClick={() => setBusqueda('')} aria-label="Limpiar">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            )}
+          </div>
+          <DrawerSelect
+            value={filtroCurso}
+            onChange={v => setFiltroCurso(v)}
+            options={[
+              { value: '', label: 'Todos los cursos' },
+              ...cursos.map(c => ({ value: c.id, label: c.nombre })),
+            ]}
+          />
+        </div>
       </div>
 
       {loading ? (
@@ -222,7 +248,7 @@ export default function Tareas() {
                   <td className="td-fecha">
                     <span className="fecha-valor">{formatFecha(t.fecha_entrega)}</span>
                     {alerta && (
-                      <span className={`fecha-alerta ${variant === 'en_riesgo' || variant === 'crisis' ? 'fecha-alerta--red' : 'fecha-alerta--dim'}`}>
+                      <span className={`fecha-alerta ${['en_riesgo','vencida','crisis'].includes(variant) ? 'fecha-alerta--red' : 'fecha-alerta--dim'}`}>
                         {alerta}
                       </span>
                     )}

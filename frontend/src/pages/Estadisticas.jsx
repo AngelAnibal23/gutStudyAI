@@ -174,6 +174,29 @@ export default function Estadisticas() {
               </span>
             </div>
           </div>
+
+          {stats.porCurso?.length > 0 && (
+            <div className="cursos-section">
+              <span className="cursos-section__title">Por curso</span>
+              <div className="cursos-list">
+                {stats.porCurso.map(c => (
+                  <div key={c.nombre} className="ccurso">
+                    <div className="ccurso__header">
+                      <span className="ccurso__nombre">{c.nombre}</span>
+                      <div className="ccurso__meta">
+                        <span className="ccurso__horas">{c.horas}h</span>
+                        <span className={`ccurso__tasa${c.tasa === 100 ? ' ccurso__tasa--full' : ''}`}>{c.tasa}%</span>
+                      </div>
+                    </div>
+                    <div className="ccurso__track">
+                      <div className="ccurso__fill" style={{ width: `${c.tasa}%` }} />
+                    </div>
+                    <span className="ccurso__sub">{c.completadas}/{c.programadas} tareas completadas</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

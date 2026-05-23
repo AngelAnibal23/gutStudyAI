@@ -1,11 +1,12 @@
 import './Badge.css';
 
 const VARIANTS = {
-  pendiente:  { label: 'Pendiente',  cls: 'badge--muted'  },
-  en_progreso:{ label: 'En progreso',cls: 'badge--blue'   },
-  completada: { label: 'Completada', cls: 'badge--lime'   },
-  en_riesgo:  { label: 'En riesgo',  cls: 'badge--amber'  },
-  crisis:     { label: 'Crisis',     cls: 'badge--red'    },
+  pendiente:  { label: 'Pendiente',  cls: 'badge--muted'   },
+  en_progreso:{ label: 'En progreso',cls: 'badge--blue'    },
+  completada: { label: 'Completada', cls: 'badge--lime'    },
+  en_riesgo:  { label: 'En riesgo',  cls: 'badge--amber'   },
+  vencida:    { label: 'Vencida',    cls: 'badge--orange'  },
+  crisis:     { label: 'Crisis',     cls: 'badge--red'     },
 };
 
 export default function Badge({ variant, custom }) {

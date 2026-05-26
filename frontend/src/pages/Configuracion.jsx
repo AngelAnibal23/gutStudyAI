@@ -4,7 +4,7 @@ import HorarioDrawer from '../components/ui/HorarioDrawer';
 import { useToast } from '../components/ui/Toast';
 import './Configuracion.css';
 
-const API = '/api';
+const API = import.meta.env.VITE_API_URL || '/api';
 const DIAS = ['lunes','martes','miercoles','jueves','viernes','sabado','domingo'];
 const DIAS_LABEL = ['L','M','X','J','V','S','D'];
 

@@ -6,7 +6,7 @@ import CrisisBanner from '../components/home/CrisisBanner';
 import CrisisModal from '../components/home/CrisisModal';
 import './Home.css';
 
-const API = '/api';
+const API = import.meta.env.VITE_API_URL || '/api';
 const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
 
 function minutosAHoras(mins) {

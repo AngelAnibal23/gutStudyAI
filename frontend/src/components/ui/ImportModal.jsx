@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import Papa from 'papaparse';
 import './ImportModal.css';
 
-const API = '/api';
+const API = import.meta.env.VITE_API_URL || '/api';
 const DIFICULTADES = ['baja', 'media', 'alta'];
 const FECHA_RE = /^\d{4}-\d{2}-\d{2}$/;
 

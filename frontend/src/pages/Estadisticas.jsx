@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Estadisticas.css';
 
-const API = '/api';
+const API = import.meta.env.VITE_API_URL || '/api';
 
 function heatLevel(completadas) {
   if (completadas === 0) return 0;

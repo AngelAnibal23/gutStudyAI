@@ -7,7 +7,7 @@ import DrawerSelect from '../components/ui/DrawerSelect';
 import { useToast } from '../components/ui/Toast';
 import './Tareas.css';
 
-const API = '/api';
+const API = import.meta.env.VITE_API_URL || '/api';
 
 const FILTROS = [
   { key: 'todas',      label: 'Todas' },

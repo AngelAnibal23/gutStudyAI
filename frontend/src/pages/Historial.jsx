@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import './Historial.css';
 
-const API = '/api';
+const API = import.meta.env.VITE_API_URL || '/api';
 
 const DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const MESES = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];

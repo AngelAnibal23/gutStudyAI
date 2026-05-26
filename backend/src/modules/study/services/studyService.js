@@ -25,6 +25,78 @@ function minutosEntre(horaInicio, horaFin) {
   return (h2 * 60 + m2) - (h1 * 60 + m1);
 }
 
+function toMins(hora) {
+  const [h, m] = hora.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function toHora(mins) {
+  return `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
+}
+
+function generarHorarioFallback({ cursos, tareas, bloqueados, dia }) {
+  const cursosHoy = cursos.filter(c => c.curso_dias.some(cd => cd.dia.toLowerCase() === dia));
+  const bloqueadosHoy = bloqueados.filter(b =>
+    b.horario_bloqueado_dias.some(d => d.dia.toLowerCase() === dia) && b.tipo !== 'dormir'
+  );
+
+  const eventosFixed = [
+    ...cursosHoy.map(c => ({ inicio: toMins(c.hora_inicio), fin: toMins(c.hora_fin), actividad: `Clase: ${c.nombre}`, tarea_id: null })),
+    ...bloqueadosHoy.map(b => ({ inicio: toMins(b.hora_inicio), fin: toMins(b.hora_fin), actividad: b.tipo, tarea_id: null })),
+  ].sort((a, b) => a.inicio - b.inicio);
+
+  const PESO_DIFICULTAD = { alta: 0, media: 1, baja: 2 };
+  const tareaQueue = [...tareas].sort((a, b) => {
+    const aCrisis = a.veces_postergada >= UMBRAL_ALERTA_ROJA ? 0 : 1;
+    const bCrisis = b.veces_postergada >= UMBRAL_ALERTA_ROJA ? 0 : 1;
+    if (aCrisis !== bCrisis) return aCrisis - bCrisis;
+    const fechaDiff = new Date(a.fecha_entrega) - new Date(b.fecha_entrega);
+    if (fechaDiff !== 0) return fechaDiff;
+    return (PESO_DIFICULTAD[a.dificultad] ?? 1) - (PESO_DIFICULTAD[b.dificultad] ?? 1);
+  });
+
+  const INICIO_DIA = 7 * 60;
+  const FIN_DIA = 23 * 60;
+  const bloques = [];
+  let cursor = INICIO_DIA;
+  let qIdx = 0;
+
+  function llenarConTareas(hasta) {
+    while (cursor < hasta && qIdx < tareaQueue.length) {
+      const t = tareaQueue[qIdx];
+      if (t.tiempo_estimado <= hasta - cursor) {
+        bloques.push({ hora_inicio: toHora(cursor), hora_fin: toHora(cursor + t.tiempo_estimado), actividad: t.nombre, tarea_id: t.id, tiempo_asignado: t.tiempo_estimado });
+        cursor += t.tiempo_estimado;
+        qIdx++;
+      } else {
+        break;
+      }
+    }
+    if (cursor < hasta) {
+      bloques.push({ hora_inicio: toHora(cursor), hora_fin: toHora(hasta), actividad: 'Tiempo libre', tarea_id: null, tiempo_asignado: hasta - cursor });
+      cursor = hasta;
+    }
+  }
+
+  for (const ev of eventosFixed) {
+    if (ev.inicio > cursor) llenarConTareas(ev.inicio);
+    const inicio = Math.max(cursor, ev.inicio);
+    if (ev.fin > inicio) {
+      bloques.push({ hora_inicio: toHora(inicio), hora_fin: toHora(ev.fin), actividad: ev.actividad, tarea_id: null, tiempo_asignado: ev.fin - inicio });
+      cursor = ev.fin;
+    }
+  }
+
+  llenarConTareas(FIN_DIA);
+  bloques.push({ hora_inicio: '23:00', hora_fin: '07:00', actividad: 'dormir', tarea_id: null, tiempo_asignado: 480 });
+
+  const alertas = tareas
+    .filter(t => t.veces_postergada >= UMBRAL_ALERTA_ROJA)
+    .map(t => `ALERTA ROJA: ${t.nombre} lleva ${t.veces_postergada} días sin completarse`);
+
+  return { resumen: 'Plan generado automáticamente. Revisa y ajusta según tu criterio.', bloques, alertas };
+}
+
 function calcularHorasLibres(cursos, bloqueados, dia) {
   const INICIO_DIA = 7 * 60;   // 07:00 en minutos
   const FIN_DIA = 24 * 60;     // 00:00 del día siguiente
@@ -215,14 +287,17 @@ async function generarDia(intensidad = 'normal') {
     intensidad,
   });
 
-  const respuestaIA = await generarProgramacion(prompt);
-
-  const match = respuestaIA.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error('La IA no devolvió JSON válido');
-  const programacion = JSON.parse(match[0]);
+  let programacion;
+  try {
+    const respuestaIA = await generarProgramacion(prompt);
+    const match = respuestaIA.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('sin JSON');
+    programacion = JSON.parse(match[0]);
+  } catch {
+    programacion = generarHorarioFallback({ cursos, tareas: tareasActualizadas, bloqueados, dia });
+  }
 
   // Autoridad del servidor: las alertas ALERTA ROJA las genera el backend
-  // (la IA puede alucionarlas para tareas que solo llevan 1 día sin completarse)
   programacion.alertas = (programacion.alertas || []).filter(a => !a.startsWith('ALERTA ROJA'));
   const tareasEnCrisis = tareasActualizadas.filter(t => t.veces_postergada >= UMBRAL_ALERTA_ROJA);
   programacion.alertas.push(...tareasEnCrisis.map(t => `ALERTA ROJA: ${t.nombre} lleva ${t.veces_postergada} días sin completarse`));
@@ -338,10 +413,15 @@ async function ejecutarCrisisAction(accion, intensidad = 'normal') {
     postergadas: tareasCrisis, intensidad,
   }) + instruccionEspecial;
 
-  const respuestaIA = await generarProgramacion(prompt);
-  const match = respuestaIA.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error('La IA no devolvió JSON válido');
-  const programacion = JSON.parse(match[0]);
+  let programacion;
+  try {
+    const respuestaIA = await generarProgramacion(prompt);
+    const match = respuestaIA.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('sin JSON');
+    programacion = JSON.parse(match[0]);
+  } catch {
+    programacion = generarHorarioFallback({ cursos, tareas, bloqueados, dia });
+  }
 
   // Autoridad del servidor: las alertas ALERTA ROJA las genera el backend
   programacion.alertas = (programacion.alertas || []).filter(a => !a.startsWith('ALERTA ROJA'));

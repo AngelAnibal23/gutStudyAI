@@ -3,7 +3,7 @@ import './HeroEmpty.css';
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
 
-export default function HeroEmpty({ onGenerar, loading }) {
+export default function HeroEmpty({ onGenerar, loading, intensidad, onSetIntensidad }) {
   const ahora = new Date();
   const dia = DIAS[ahora.getDay()].toUpperCase();
   const fecha = `${ahora.getDate()} ${MESES[ahora.getMonth()]}`;
@@ -26,6 +26,19 @@ export default function HeroEmpty({ onGenerar, loading }) {
         Apreta el botón y déjame armar una programación que respete
         tus clases, tus tareas y tu energía.
       </p>
+
+      <div className="intensity-selector">
+        {['ligero', 'normal', 'intenso'].map(op => (
+          <button
+            key={op}
+            className={`intensity-btn${intensidad === op ? ' intensity-btn--active' : ''}`}
+            onClick={() => onSetIntensidad(op)}
+            disabled={loading}
+          >
+            {op.charAt(0).toUpperCase() + op.slice(1)}
+          </button>
+        ))}
+      </div>
 
       <div className="hero-cta">
         <button

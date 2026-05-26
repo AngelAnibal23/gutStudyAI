@@ -45,7 +45,7 @@ function calcularHorasLibres(cursos, bloqueados, dia) {
   return Math.max(horasLibres, 0);
 }
 
-function construirPrompt({ cursos, tareas, bloqueados, fecha, dia, fechaManana, diaManana, horasLibresManana, postergadas }) {
+function construirPrompt({ cursos, tareas, bloqueados, fecha, dia, fechaManana, diaManana, horasLibresHoy, horasLibresManana, postergadas, intensidad }) {
   const cursosHoy = cursos.filter((c) =>
     c.curso_dias.some((cd) => cd.dia.toLowerCase() === dia)
   );
@@ -70,54 +70,106 @@ function construirPrompt({ cursos, tareas, bloqueados, fecha, dia, fechaManana, 
       }).join('\n')
     : '- Ninguna';
 
-  return `Eres un asistente de planificación académica. Hoy es ${fecha} (${dia}).
+  return `Eres un planificador académico. Hoy es ${fecha} (${dia}).
+Intensidad del día: ${intensidad.toUpperCase()}.
 
-CURSOS QUE TENGO HOY:
-${cursosHoy.length ? cursosHoy.map((c) => `- ${c.nombre} de ${c.hora_inicio} a ${c.hora_fin}`).join('\n') : '- Ninguno'}
+════════════════════════════════
+DATOS DEL DÍA
+════════════════════════════════
 
-HORARIOS BLOQUEADOS HOY:
+CLASES HOY:
+${cursosHoy.length ? cursosHoy.map((c) => `- ${c.nombre} de ${c.hora_inicio} a ${c.hora_fin}`).join('\n') : '- Sin clases'}
+
+BLOQUES BLOQUEADOS HOY:
 ${bloqueadosHoy.length ? bloqueadosHoy.map((b) => `- ${b.tipo} de ${b.hora_inicio} a ${b.hora_fin}`).join('\n') : '- Ninguno'}
 
-TAREAS PENDIENTES (ordenadas por fecha de entrega):
+Horas libres estimadas hoy: ${horasLibresHoy}h
+Horas libres estimadas mañana (${fechaManana}, ${diaManana}): ${horasLibresManana}h
+
+CONTEXTO DE MAÑANA:
+- Cursos: ${cursosManana.length ? cursosManana.map((c) => `${c.nombre} ${c.hora_inicio}-${c.hora_fin}`).join(', ') : 'Ninguno'}
+- Bloqueados: ${bloqueadosManana.length ? bloqueadosManana.map((b) => `${b.tipo} ${b.hora_inicio}-${b.hora_fin}`).join(', ') : 'Ninguno'}
+
+════════════════════════════════
+TAREAS PENDIENTES (por deadline)
+════════════════════════════════
+
+TIPOS — qué significan:
+- examen / exposicion: el evento ocurre EN la fecha_entrega. Debes planificar preparación los días PREVIOS.
+  Si la fecha_entrega es HOY: no agregues "preparación" (ya es tarde). Solo repaso rápido (≤20 min) si la intensidad es NORMAL o INTENSO y hay tiempo antes del horario del examen.
+- proyecto / informe / quiz: entregables. Se puede avanzar hasta el día de entrega.
+
 ${tareas.length ? tareas.map((t) =>
-  `- ID:${t.id} [${t.cursos?.nombre || 'Sin curso'}] ${t.nombre} | tipo: ${t.tipo} | entrega: ${t.fecha_entrega} | dificultad: ${t.dificultad} | tiempo estimado: ${t.tiempo_estimado} min | postergada: ${t.veces_postergada} veces`
+  `- ID:${t.id} [${t.cursos?.nombre || 'Sin curso'}] "${t.nombre}"` +
+  ` | tipo: ${t.tipo} | entrega: ${t.fecha_entrega}` +
+  ` | dificultad: ${t.dificultad} | tiempo: ${t.tiempo_estimado} min` +
+  ` | postergada: ${t.veces_postergada} veces` +
+  (t.notas ? ` | notas: "${t.notas}"` : '')
 ).join('\n') : '- Sin tareas pendientes'}
 
 TAREAS NO COMPLETADAS AYER:
 ${seccionPostergadas}
 
-CONTEXTO DE MAÑANA (${fechaManana}, ${diaManana}):
-- Cursos: ${cursosManana.length ? cursosManana.map((c) => `${c.nombre} ${c.hora_inicio}-${c.hora_fin}`).join(', ') : 'Ninguno'}
-- Bloqueados: ${bloqueadosManana.length ? bloqueadosManana.map((b) => `${b.tipo} ${b.hora_inicio}-${b.hora_fin}`).join(', ') : 'Ninguno'}
-- Horas libres estimadas mañana: ${horasLibresManana}h
+════════════════════════════════
+CÓMO RAZONAR ANTES DE PLANIFICAR
+════════════════════════════════
 
-REGLAS ESTRICTAS:
-1. Los HORARIOS BLOQUEADOS deben aparecer como bloques en el JSON con sus horas exactas y tarea_id: null. No los omitas.
-2. El campo "tiempo_asignado" de cada tarea debe ser exactamente su "tiempo estimado". No lo reduzcas.
-3. En "tarea_id" usa el ID numérico exacto de la lista (prefijo ID:). Si no es una tarea, usa null.
-4. El día termina con el bloque "dormir". No agregues actividades después.
-5. Llena todo el día desde las 07:00 sin dejar huecos.
-6. Usa el CONTEXTO DE MAÑANA para razonar: si hoy tienes más horas libres que mañana, prioriza hacer más tareas hoy. Si mañana hay espacio suficiente, puedes diferir tareas no urgentes.
-7. Para TAREAS NO COMPLETADAS AYER: decide si incluirlas hoy o diferirlas según el tiempo disponible. ALERTA ROJA solo aplica si la tarea tiene el marcador "⚠️ ALERTA ROJA" en la lista de no completadas. Una tarea con 1 o 2 postergaciones NO es alerta roja. Cuando sí aplique, inclúyela HOY obligatoriamente y escribe en "alertas": "ALERTA ROJA: [nombre tarea] lleva N días sin completarse".
-8. Explica en "alertas" cualquier decisión de diferir una tarea a mañana indicando el motivo concreto. Si no hay nada especial que reportar, deja "alertas" como array vacío.
+PASO 1 — Analiza cada curso de la lista de tareas:
+  → ¿Qué tiene pendiente próximamente?
+  → Criterio de prioridad (principio, no fórmula):
+    Una tarea difícil con deadline en 3 días > una tarea fácil con deadline en 2 días,
+    porque la dificultad exige más tiempo de preparación.
+
+PASO 2 — Aplica la distinción por tipo:
+  → examen/exposicion con fecha HOY: solo repaso rápido si la intensidad lo permite.
+  → examen/exposicion con fecha MAÑANA o PASADO: priorizar preparación HOY.
+  → proyecto/informe/quiz: avanzar según urgencia y tiempo disponible.
+
+PASO 3 — Distribuye progresivamente si hay múltiples deadlines esta semana:
+  No acumules todo en el último día. Hoy el más urgente/difícil, mañana y siguientes el resto en orden.
+  Usa la comparación horasLibresHoy vs horasLibresManana para decidir cuánto hacer cada día.
+
+PASO 4 — Cursos sin entregable inminente:
+  Si hay tiempo libre, puedes sugerir avanzar tareas futuras de ese curso.
+  Márcalo como "(opcional)" en el nombre del bloque. No lo impongas.
+
+PASO 5 — Aplica la intensidad:
+  - INTENSO: maximiza bloques de estudio. Pausas solo si el bloque > 90 min. Incluye opcionales.
+  - NORMAL: distribuye sosteniblemente. Pausa de 10-15 min entre bloques > 60 min. Opcionales solo si hay tiempo cómodo.
+  - LIGERO: solo lo urgente (deadline ≤ 2 días) o en alerta roja. Deja "Tiempo libre" si no hay urgencia.
+
+ALERTA ROJA:
+  Las tareas marcadas ⚠️ ALERTA ROJA en "no completadas ayer" deben incluirse HOY como primeros bloques de estudio, sin excepción ni importar la intensidad. NO añadas nada en "alertas" para ellas; el sistema lo gestiona automáticamente.
+
+════════════════════════════════
+REGLAS DE FORMATO (no negociables)
+════════════════════════════════
+
+1. Los BLOQUES BLOQUEADOS HOY aparecen con sus horas exactas y tarea_id: null. No los omitas.
+2. tiempo_asignado = exactamente tiempo_estimado de la tarea en minutos. No reducirlo.
+   Si dividís la tarea en varios bloques, cada bloque lleva el tiempo parcial correspondiente.
+3. tarea_id = ID numérico exacto del prefijo ID:. Si no es tarea real, null.
+4. El día cierra con el bloque "dormir". Nada después.
+5. Cubre desde las 07:00 sin huecos. Pausas entre bloques usan tarea_id: null.
+6. Cualquier decisión de diferir una tarea → justificar en "alertas". Nunca escribas mensajes que empiecen con "ALERTA ROJA" en alertas; eso lo maneja el sistema. Si no hay nada especial, [].
 
 Responde ÚNICAMENTE con JSON válido:
 {
-  "resumen": "Una frase motivacional breve",
+  "resumen": "Frase motivacional breve (máx 20 palabras)",
   "bloques": [
     {
       "hora_inicio": "HH:MM",
       "hora_fin": "HH:MM",
-      "actividad": "nombre",
-      "tarea_id": <id numérico o null>,
+      "actividad": "nombre descriptivo",
+      "tarea_id": <número o null>,
       "tiempo_asignado": <minutos>
     }
   ],
-  "alertas": ["string por cada decisión o alerta roja"]
+  "alertas": ["string"]
 }`;
 }
 
-async function generarDia() {
+async function generarDia(intensidad = 'normal') {
   const fecha = hoy();
   const dia = diaSemana(0);
   const fechaManana = manana();
@@ -147,6 +199,7 @@ async function generarDia() {
     : [];
 
   const horasLibresManana = calcularHorasLibres(cursos, bloqueados, diaManana);
+  const horasLibresHoy    = calcularHorasLibres(cursos, bloqueados, dia);
 
   const prompt = construirPrompt({
     cursos,
@@ -156,8 +209,10 @@ async function generarDia() {
     dia,
     fechaManana,
     diaManana,
+    horasLibresHoy,
     horasLibresManana,
     postergadas: postergadasActualizadas,
+    intensidad,
   });
 
   const respuestaIA = await generarProgramacion(prompt);
@@ -165,6 +220,12 @@ async function generarDia() {
   const match = respuestaIA.match(/\{[\s\S]*\}/);
   if (!match) throw new Error('La IA no devolvió JSON válido');
   const programacion = JSON.parse(match[0]);
+
+  // Autoridad del servidor: las alertas ALERTA ROJA las genera el backend
+  // (la IA puede alucionarlas para tareas que solo llevan 1 día sin completarse)
+  programacion.alertas = (programacion.alertas || []).filter(a => !a.startsWith('ALERTA ROJA'));
+  const tareasEnCrisis = tareasActualizadas.filter(t => t.veces_postergada >= UMBRAL_ALERTA_ROJA);
+  programacion.alertas.push(...tareasEnCrisis.map(t => `ALERTA ROJA: ${t.nombre} lleva ${t.veces_postergada} días sin completarse`));
 
   // Forzar tiempo_asignado y actividad con los valores reales de la tarea
   const tiempoMap = new Map(tareasActualizadas.map(t => [t.id, t.tiempo_estimado]));
@@ -203,7 +264,7 @@ async function generarDia() {
   return { fecha, dia, ...programacion };
 }
 
-async function ejecutarCrisisAction(accion) {
+async function ejecutarCrisisAction(accion, intensidad = 'normal') {
   if (accion === 'reconocer') return null;
 
   const fecha     = hoy();
@@ -268,16 +329,23 @@ async function ejecutarCrisisAction(accion) {
     }
   }
 
+  const horasLibresHoy = calcularHorasLibres(cursos, bloqueados, dia);
+
   const prompt = construirPrompt({
     cursos, tareas, bloqueados, fecha, dia,
-    fechaManana, diaManana, horasLibresManana,
-    postergadas: tareasCrisis,
+    fechaManana, diaManana,
+    horasLibresHoy, horasLibresManana,
+    postergadas: tareasCrisis, intensidad,
   }) + instruccionEspecial;
 
   const respuestaIA = await generarProgramacion(prompt);
   const match = respuestaIA.match(/\{[\s\S]*\}/);
   if (!match) throw new Error('La IA no devolvió JSON válido');
   const programacion = JSON.parse(match[0]);
+
+  // Autoridad del servidor: las alertas ALERTA ROJA las genera el backend
+  programacion.alertas = (programacion.alertas || []).filter(a => !a.startsWith('ALERTA ROJA'));
+  programacion.alertas.push(...tareasCrisis.map(t => `ALERTA ROJA: ${t.nombre} lleva ${t.veces_postergada} días sin completarse`));
 
   // Forzar tiempo_asignado y actividad con los valores reales de la tarea
   const tiempoMapCrisis = new Map(tareas.map(t => [t.id, t.tiempo_estimado]));

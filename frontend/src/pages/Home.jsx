@@ -19,6 +19,7 @@ export default function Home({ programacion, setProgramacion, checks, setChecks 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [crisisOpen, setCrisisOpen] = useState(false);
+  const [intensidad, setIntensidad] = useState('normal');
   // false by default — optimistic; set to true if risk detected after fetch
   const [hayRiesgo, setHayRiesgo] = useState(false);
   const [timer, setTimer] = useState(null);
@@ -147,7 +148,7 @@ export default function Home({ programacion, setProgramacion, checks, setChecks 
     const res = await fetch(`${API}/study/crisis-action`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accion }),
+      body: JSON.stringify({ accion, intensidad }),
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error);
@@ -161,7 +162,7 @@ export default function Home({ programacion, setProgramacion, checks, setChecks 
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API}/study/generar-dia`);
+      const res = await fetch(`${API}/study/generar-dia?intensidad=${intensidad}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setProgramacion(data);
@@ -177,7 +178,7 @@ export default function Home({ programacion, setProgramacion, checks, setChecks 
   if (!programacion) {
     return (
       <>
-        <HeroEmpty onGenerar={generarDia} loading={loading} />
+        <HeroEmpty onGenerar={generarDia} loading={loading} intensidad={intensidad} onSetIntensidad={setIntensidad} />
         {error && <div className="error-toast">{error}</div>}
       </>
     );
@@ -320,6 +321,19 @@ export default function Home({ programacion, setProgramacion, checks, setChecks 
             <span className="next-task-hora">{proximaTarea.hora_inicio} → {proximaTarea.hora_fin}</span>
           </div>
         )}
+
+        <div className="intensity-selector">
+          {['ligero', 'normal', 'intenso'].map(op => (
+            <button
+              key={op}
+              className={`intensity-btn${intensidad === op ? ' intensity-btn--active' : ''}`}
+              onClick={() => setIntensidad(op)}
+              disabled={loading}
+            >
+              {op.charAt(0).toUpperCase() + op.slice(1)}
+            </button>
+          ))}
+        </div>
 
         <button className="btn-regenerar" onClick={generarDia} disabled={loading}>
           {loading ? 'Regenerando…' : 'Regenerar día'}

@@ -257,6 +257,32 @@
   margin-top: -4px;
 }
 
+/* Compartida toggle */
+.compartida-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 0.5px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: var(--transition);
+  width: 100%;
+}
+.compartida-btn:hover {
+  border-color: var(--border-hover);
+  color: var(--text-secondary);
+}
+.compartida-btn--on {
+  border-color: var(--lime-border-strong);
+  background: var(--lime-glow);
+  color: var(--lime);
+}
+
 @media (max-width: 768px) {
   .task-drawer {
     width: 100vw;

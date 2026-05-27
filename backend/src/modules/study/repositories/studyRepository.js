@@ -140,10 +140,10 @@ async function getTareas() {
   return data;
 }
 
-async function crearTarea({ nombre, curso_id, tipo, fecha_entrega, dificultad, tiempo_estimado, notas }) {
+async function crearTarea({ nombre, curso_id, tipo, fecha_entrega, dificultad, tiempo_estimado, notas, compartida }) {
   const { data, error } = await supabase
     .from('tareas')
-    .insert({ nombre, curso_id, tipo, fecha_entrega, dificultad, tiempo_estimado, notas: notas || null, estado: 'pendiente', veces_postergada: 0 })
+    .insert({ nombre, curso_id, tipo, fecha_entrega, dificultad, tiempo_estimado, notas: notas || null, compartida: compartida || false, estado: 'pendiente', veces_postergada: 0 })
     .select('*, cursos(nombre)')
     .single();
   if (error) throw error;
@@ -156,10 +156,10 @@ async function eliminarTarea(id) {
   if (error) throw error;
 }
 
-async function actualizarTarea(id, { nombre, curso_id, tipo, fecha_entrega, dificultad, tiempo_estimado, notas }) {
+async function actualizarTarea(id, { nombre, curso_id, tipo, fecha_entrega, dificultad, tiempo_estimado, notas, compartida }) {
   const { data, error } = await supabase
     .from('tareas')
-    .update({ nombre, curso_id, tipo, fecha_entrega, dificultad, tiempo_estimado, notas: notas || null })
+    .update({ nombre, curso_id, tipo, fecha_entrega, dificultad, tiempo_estimado, notas: notas || null, compartida: compartida ?? false })
     .eq('id', id)
     .select('*, cursos(nombre)')
     .single();
@@ -196,6 +196,14 @@ async function actualizarEstadoTarea(id, estado) {
     .select('*, cursos(nombre)')
     .single();
   if (error) throw error;
+
+  // Sincronizar entradas del horario: si la tarea se completa/reactiva,
+  // reflejar el mismo estado en programacion_tareas para no desincronizar la vista
+  await supabase
+    .from('programacion_tareas')
+    .update({ completada: estado === 'completada' })
+    .eq('tarea_id', id);
+
   return data;
 }
 
@@ -287,8 +295,12 @@ async function actualizarHorario(id, { tipo, hora_inicio, hora_fin, dias }) {
 
 async function eliminarHorario(id) {
   await supabase.from('horario_bloqueado_dias').delete().eq('horario_bloqueado_id', id);
-  const { error } = await supabase.from('horario_bloqueado').delete().eq('id', id);
+  const { error, count } = await supabase
+    .from('horario_bloqueado')
+    .delete({ count: 'exact' })
+    .eq('id', id);
   if (error) throw error;
+  return count > 0;
 }
 
 module.exports = {

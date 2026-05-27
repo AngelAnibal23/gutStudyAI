@@ -8,6 +8,7 @@ import Tareas from './pages/Tareas';
 import Configuracion from './pages/Configuracion';
 import Estadisticas from './pages/Estadisticas';
 import Historial from './pages/Historial';
+import Reporte from './pages/Reporte';
 import { ToastProvider } from './components/ui/Toast';
 import './styles/globals.css';
 import './App.css';
@@ -67,6 +68,7 @@ export default function App() {
               <Route path="/estadisticas" element={<Estadisticas />} />
               <Route path="/historial" element={<Historial />} />
               <Route path="/configuracion" element={<Configuracion />} />
+              <Route path="/reporte" element={<Reporte />} />
             </Routes>
           </main>
           <BottomNav />

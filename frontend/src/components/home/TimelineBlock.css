@@ -1,130 +1,109 @@
+/* ═══ TimelineBlock v2 ══════════════════════════════════════════════ */
+
 .tblock {
   display: flex;
   align-items: stretch;
   gap: 14px;
-  transition: var(--transition);
 }
 
-.tblock--done { opacity: 0.38; }
+.tblock--done { opacity: 0.36; }
 
-/* Rail de color */
+/* ── Rail ─────────────────────────────────────────────────────────── */
 .tblock-rail {
   width: 2px;
-  border-radius: 999px;
+  border-radius: 1px;
   flex-shrink: 0;
-  min-height: 100%;
 }
 
 .tblock-rail--lime  { background: var(--lime); }
 .tblock-rail--blue  { background: var(--blue); }
-.tblock-rail--muted { background: var(--text-muted); }
-.tblock-rail--dim   { background: var(--text-dim); }
+.tblock-rail--muted { background: rgba(255, 255, 255, 0.10); }
+.tblock-rail--dim   { background: rgba(255, 255, 255, 0.04); }
 
-/* Hora */
-.tblock-time {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  min-width: 80px;
-  padding-top: 14px;
-  flex-shrink: 0;
-}
-
-.tblock-hora {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-secondary);
-  line-height: 1;
-}
-
-.tblock-sep {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-dim);
-  line-height: 1;
-}
-
-/* Card */
+/* ── Card ─────────────────────────────────────────────────────────── */
 .tblock-card {
   flex: 1;
+  min-width: 0;
   background: var(--bg-card);
   border: 0.5px solid var(--border);
   border-radius: 10px;
-  padding: 13px 16px;
+  padding: 12px 16px;
+  margin-bottom: 4px;
   display: flex;
   flex-direction: column;
-  gap: 0;
   transition: var(--transition);
-  margin-bottom: 6px;
 }
 
-.tblock-card:hover {
-  border-color: var(--border-hover);
-}
+.tblock-card:hover { border-color: var(--border-hover); }
 
 .tblock--active .tblock-card {
-  box-shadow: 0 0 0 1px var(--lime-border-strong), 0 0 24px var(--lime-glow);
   border-color: var(--lime-border);
+  box-shadow: 0 0 0 1px var(--lime-border-strong), 0 0 24px var(--lime-glow);
 }
 
-/* Fila principal dentro de la card */
+.tblock--timer .tblock-card {
+  border-color: var(--lime-border-strong);
+  box-shadow: 0 0 0 1px var(--lime-border), 0 0 32px var(--lime-glow);
+}
+
+/* ── Normal interior ─────────────────────────────────────────────── */
+.tblock-card-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Header: hora + pill */
 .tblock-top {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.tblock-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.tblock-info {
-  display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
 }
 
-/* Acciones (start + check) */
-.tblock-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-/* Botón play — aparece al hover de la card */
-.tblock-start {
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
-  border: 0.5px solid var(--border);
-  background: transparent;
+.tblock-hora-inicio {
+  font-family: var(--font-mono);
+  font-size: 11px;
   color: var(--text-dim);
-  display: grid;
-  place-items: center;
-  transition: var(--transition);
-  opacity: 0;
+  line-height: 1;
   flex-shrink: 0;
 }
-.tblock-card:hover .tblock-start {
-  opacity: 1;
-}
-.tblock-start:hover {
-  border-color: var(--lime-border-strong);
-  background: var(--lime-glow);
-  color: var(--lime-dim);
+
+/* Category pill */
+.tblock-cat-pill {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  line-height: 1.5;
+  flex-shrink: 0;
 }
 
+.tblock-cat-pill--lime  { background: rgba(190, 242, 100, 0.10); color: var(--lime-dim); }
+.tblock-cat-pill--blue  { background: rgba(59, 130, 246, 0.12);  color: var(--blue); }
+.tblock-cat-pill--muted { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); }
+.tblock-cat-pill--dim   { background: rgba(255, 255, 255, 0.03); color: var(--text-dim); }
+
+/* Activity name — grows to fill space in tall cards */
 .tblock-actividad {
+  flex: 1;
   font-size: 14px;
   font-weight: 500;
   color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  display: flex;
+  align-items: center;
+}
+
+/* Footer: duration + actions */
+.tblock-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .tblock-dur {
@@ -132,14 +111,38 @@
   font-size: 11px;
   color: var(--text-muted);
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
-/* Checkbox */
+/* ── Actions ─────────────────────────────────────────────────────── */
+.tblock-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tblock-start {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 0.5px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  display: grid;
+  place-items: center;
+  transition: var(--transition);
+  opacity: 0;
+}
+.tblock-card:hover .tblock-start { opacity: 1; }
+.tblock-start:hover {
+  border-color: var(--lime-border-strong);
+  background: var(--lime-glow);
+  color: var(--lime-dim);
+}
+
 .tblock-check {
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
   border: 1px solid var(--border-hover);
   background: transparent;
   display: grid;
@@ -147,24 +150,57 @@
   flex-shrink: 0;
   transition: var(--transition);
 }
-
 .tblock-check:hover {
   border-color: var(--lime-border-strong);
   background: var(--lime-glow);
 }
-
 .tblock-check--done {
   background: var(--lime);
   border-color: var(--lime);
 }
 
-/* ── Timer inline ─────────────────────────────────────────── */
+/* ── Category variants ───────────────────────────────────────────── */
+.tblock--estudio .tblock-card {
+  background: rgba(190, 242, 100, 0.025);
+}
+
+.tblock--sueño .tblock-card {
+  background: rgba(255, 255, 255, 0.01);
+  border-color: rgba(255, 255, 255, 0.04);
+}
+.tblock--sueño .tblock-actividad,
+.tblock--sueño .tblock-hora-inicio { color: var(--text-dim); }
+
+/* ── Compact mode (≤ 20m) ────────────────────────────────────────── */
+.tblock--compact .tblock-card {
+  padding: 0 16px;
+  justify-content: center;
+}
+
+.tblock-compact-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tblock--compact .tblock-hora-inicio { font-size: 10px; flex-shrink: 0; }
+
+.tblock--compact .tblock-actividad {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 400;
+  flex: 1;
+}
+
+.tblock--compact .tblock-dur { font-size: 10px; flex-shrink: 0; }
+
+/* ── Timer inline ────────────────────────────────────────────────── */
 .tblock-timer {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-top: 10px;
-  margin-top: 10px;
+  padding-top: 12px;
+  margin-top: 8px;
   border-top: 0.5px solid var(--border-subtle);
 }
 
@@ -197,14 +233,9 @@
   line-height: 1;
   transition: color 300ms ease;
 }
-.tblock-timer-mm--done {
-  color: var(--lime);
-}
+.tblock-timer-mm--done { color: var(--lime); }
 
-.tblock-timer-btns {
-  display: flex;
-  gap: 4px;
-}
+.tblock-timer-btns { display: flex; gap: 4px; }
 
 .timer-btn {
   width: 28px;
@@ -227,10 +258,4 @@
   background: var(--danger-bg);
   border-color: var(--danger-border);
   color: var(--danger);
-}
-
-/* Card activa con timer: borde lime más pronunciado */
-.tblock--timer .tblock-card {
-  border-color: var(--lime-border-strong);
-  box-shadow: 0 0 0 1px var(--lime-border), 0 0 32px var(--lime-glow);
 }

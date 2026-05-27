@@ -224,6 +224,7 @@ REGLAS DE FORMATO (no negociables)
 4. El día cierra con el bloque "dormir". Nada después.
 5. Cubre desde las 07:00 sin huecos. Pausas entre bloques usan tarea_id: null.
 6. Cualquier decisión de diferir una tarea → justificar en "alertas". Nunca escribas mensajes que empiecen con "ALERTA ROJA" en alertas; eso lo maneja el sistema. Si no hay nada especial, [].
+7. En "alertas" usa SIEMPRE el nombre de la tarea, nunca el ID numérico (jamás escribas "ID:34" ni similares).
 
 Responde ÚNICAMENTE con JSON válido:
 {

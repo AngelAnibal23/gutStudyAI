@@ -64,8 +64,10 @@ router.post('/bulk', async (req, res) => {
 });
 
 router.delete('/:id', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
   try {
-    await repo.eliminarTarea(req.params.id);
+    await repo.eliminarTarea(id);
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -73,19 +75,23 @@ router.delete('/:id', async (req, res) => {
 });
 
 router.patch('/:id/estado', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
   if (!req.body.estado || !ESTADOS_VALIDOS.includes(req.body.estado)) {
     return res.status(400).json({ error: `estado debe ser: ${ESTADOS_VALIDOS.join(', ')}` });
   }
   try {
-    res.json(await repo.actualizarEstadoTarea(req.params.id, req.body.estado));
+    res.json(await repo.actualizarEstadoTarea(id, req.body.estado));
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
 router.patch('/:id', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
   try {
-    res.json(await repo.actualizarTarea(req.params.id, req.body));
+    res.json(await repo.actualizarTarea(id, req.body));
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

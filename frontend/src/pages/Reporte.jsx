@@ -2,14 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import './Reporte.css';
 
-const DIAS      = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
+const DIAS       = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
 const DIAS_LABEL = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
 const MESES      = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
-const GRID_START = 7 * 60;   // 420 min
-const GRID_END   = 21 * 60;  // 1260 min
-const GRID_DUR   = GRID_END - GRID_START; // 840 min
-const HOURS      = Array.from({ length: 15 }, (_, i) => 7 + i); // 7..21
+const GRID_START = 7 * 60;
+const GRID_END   = 21 * 60;
+const GRID_DUR   = GRID_END - GRID_START;
+const HOURS      = Array.from({ length: 15 }, (_, i) => 7 + i);
 
 const CURSO_PALETTE = [
   { bg: 'rgba(59,130,246,0.22)',  border: '#3B82F6', text: '#93C5FD' },
@@ -20,18 +20,18 @@ const CURSO_PALETTE = [
 ];
 
 function taskColor(dif, done) {
-  if (done)    return { bg: 'rgba(190,242,100,0.14)', border: 'rgba(190,242,100,0.55)', text: '#BEF264' };
+  if (done)     return { bg: 'rgba(190,242,100,0.14)', border: 'rgba(190,242,100,0.55)', text: '#BEF264' };
   if (dif <= 2) return { bg: 'rgba(59,130,246,0.18)',  border: 'rgba(59,130,246,0.55)',  text: '#93C5FD' };
-  if (dif === 3) return { bg: 'rgba(245,158,11,0.18)', border: 'rgba(245,158,11,0.55)', text: '#FCD34D' };
-  return            { bg: 'rgba(239,68,68,0.18)',  border: 'rgba(239,68,68,0.55)',  text: '#FCA5A5' };
+  if (dif === 3)return { bg: 'rgba(245,158,11,0.18)', border: 'rgba(245,158,11,0.55)',  text: '#FCD34D' };
+  return             { bg: 'rgba(239,68,68,0.18)',  border: 'rgba(239,68,68,0.55)',  text: '#FCA5A5' };
 }
 
 function toMin(t) {
   const [h, m] = t.split(':').map(Number);
   return h * 60 + m;
 }
-function topPct(min)  { return ((min - GRID_START) / GRID_DUR) * 100; }
-function htPct(dur)   { return (dur / GRID_DUR) * 100; }
+function topPct(min) { return ((min - GRID_START) / GRID_DUR) * 100; }
+function htPct(dur)  { return (dur / GRID_DUR) * 100; }
 
 function dateStr(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -64,6 +64,11 @@ function getDiaNombre(d) {
   return DIAS[day - 1];
 }
 
+function nowMinutes() {
+  const n = new Date();
+  return n.getHours() * 60 + n.getMinutes();
+}
+
 export default function Reporte() {
   const [vista,     setVista]     = useState('semanal');
   const [base,      setBase]      = useState(() => new Date());
@@ -72,6 +77,7 @@ export default function Reporte() {
   const [cursos,    setCursos]    = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [nowMin,    setNowMin]    = useState(nowMinutes);
   const gridRef = useRef(null);
 
   useEffect(() => {
@@ -85,9 +91,12 @@ export default function Reporte() {
     }).catch(() => setLoading(false));
   }, []);
 
-  const colorMap  = Object.fromEntries(
-    cursos.map((c, i) => [c.id, CURSO_PALETTE[i % CURSO_PALETTE.length]])
-  );
+  useEffect(() => {
+    const id = setInterval(() => setNowMin(nowMinutes()), 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  const colorMap   = Object.fromEntries(cursos.map((c, i) => [c.id, CURSO_PALETTE[i % CURSO_PALETTE.length]]));
   const courseById = Object.fromEntries(cursos.map(c => [c.id, c]));
 
   const shared  = tareas.filter(t => t.compartida);
@@ -126,6 +135,7 @@ export default function Reporte() {
   function renderCol(date, diaNombre) {
     const dStr    = dateStr(date);
     const isToday = dStr === todayS;
+    const showNow = isToday && nowMin >= GRID_START && nowMin <= GRID_END;
 
     const dayCursos = diaNombre
       ? cursos.filter(c => c.curso_dias?.some(d => d.dia === diaNombre))
@@ -133,13 +143,17 @@ export default function Reporte() {
     const dayTareas = visible.filter(t => t.fecha_entrega === dStr);
 
     let morningOffset = 0;
-    const courseOffsets = {}; // curso_id → minutos acumulados dentro del bloque
+    const courseOffsets = {};
 
     return (
       <div key={dStr} className={`rg-col${isToday ? ' rg-col--today' : ''}`}>
         {HOURS.map(h => (
           <div key={h} className="rg-hline" style={{ top: `${topPct(h * 60)}%` }} />
         ))}
+
+        {showNow && (
+          <div className="rg-now-line" style={{ top: `${topPct(nowMin)}%` }} />
+        )}
 
         {dayTareas.map(t => {
           const linkedCurso     = t.curso_id != null ? courseById[t.curso_id] : null;
@@ -148,19 +162,17 @@ export default function Reporte() {
           let top, ht, inCourse = false;
 
           if (linkedCurso && courseRunsToday) {
-            // Posicionar dentro del bloque del curso
             const cStart = toMin(linkedCurso.hora_inicio);
             const cEnd   = toMin(linkedCurso.hora_fin);
             const cDur   = cEnd - cStart;
             const cOff   = courseOffsets[t.curso_id] || 0;
-            top       = topPct(cStart + cOff);
-            ht        = Math.max(htPct(Math.min(t.tiempo_estimado, cDur - cOff)), 1.2);
+            top      = topPct(cStart + cOff);
+            ht       = Math.max(htPct(Math.min(t.tiempo_estimado, cDur - cOff)), 1.2);
             courseOffsets[t.curso_id] = cOff + t.tiempo_estimado;
-            inCourse  = true;
+            inCourse = true;
           } else {
-            // Apilar desde la mañana
             top = topPct(GRID_START + morningOffset);
-            ht  = Math.max(htPct(t.tiempo_estimado), 1.5);
+            ht  = Math.max(htPct(t.tiempo_estimado), 1.8);
             morningOffset += t.tiempo_estimado;
           }
 
@@ -172,8 +184,8 @@ export default function Reporte() {
               style={{ top: `${top}%`, height: `${ht}%`, background: col.bg, borderColor: col.border, color: col.text }}
               title={t.nombre}
             >
-              {t.estado === 'completada' && <span className="rg-check">✓ </span>}
-              {inCourse && <span className="rg-deadline-tag">📌 Entrega</span>}
+              {t.estado === 'completada' && <span className="rg-check">✓</span>}
+              {inCourse && <span className="rg-deadline-tag">ENT</span>}
               <span className="rg-blk-name">{t.nombre}</span>
               <span className="rg-blk-meta">{t.tiempo_estimado}min · {t.cursos?.nombre ?? ''}</span>
             </div>
@@ -210,8 +222,15 @@ export default function Reporte() {
 
   const sharedCount = shared.length;
 
+  const viewDates  = vista === 'semanal' ? weekDates.map(d => dateStr(d)) : [dateStr(base)];
+  const viewTareas = shared.filter(t => viewDates.includes(t.fecha_entrega));
+  const viewDone   = viewTareas.filter(t => t.estado === 'completada').length;
+  const viewPend   = viewTareas.filter(t => t.estado !== 'completada').length;
+  const viewHours  = (viewTareas.reduce((s, t) => s + (t.tiempo_estimado || 0), 0) / 60).toFixed(1);
+
   return (
     <div className="reporte-page">
+
       {/* ── Topbar ── */}
       <div className="rp-topbar">
         <div className="rp-left">
@@ -219,19 +238,13 @@ export default function Reporte() {
             <h1 className="rp-title">Reporte</h1>
             <p className="rp-subtitle">
               {sharedCount === 0
-                ? 'Sin tareas compartidas — marca tareas como "Compartida" en Mis Tareas'
+                ? 'Sin tareas compartidas'
                 : `${sharedCount} tarea${sharedCount !== 1 ? 's' : ''} compartida${sharedCount !== 1 ? 's' : ''}`}
             </p>
           </div>
           <div className="vista-toggle">
-            <button
-              className={`vt-btn${vista === 'diario' ? ' vt-btn--on' : ''}`}
-              onClick={() => setVista('diario')}
-            >Diario</button>
-            <button
-              className={`vt-btn${vista === 'semanal' ? ' vt-btn--on' : ''}`}
-              onClick={() => setVista('semanal')}
-            >Semanal</button>
+            <button className={`vt-btn${vista === 'diario'  ? ' vt-btn--on' : ''}`} onClick={() => setVista('diario')}>Diario</button>
+            <button className={`vt-btn${vista === 'semanal' ? ' vt-btn--on' : ''}`} onClick={() => setVista('semanal')}>Semanal</button>
           </div>
         </div>
 
@@ -261,28 +274,50 @@ export default function Reporte() {
         </div>
       </div>
 
+      {/* ── Stats ── */}
+      {!loading && sharedCount > 0 && (
+        <div className="rp-stats">
+          <div className="rp-stat-item">
+            <span className="rp-stat-val">{viewTareas.length}</span>
+            <span className="rp-stat-lbl">{vista === 'semanal' ? 'esta semana' : 'hoy'}</span>
+          </div>
+          <div className="rp-stat-divider" />
+          <div className="rp-stat-item rp-stat-item--done">
+            <span className="rp-stat-val">{viewDone}</span>
+            <span className="rp-stat-lbl">completadas</span>
+          </div>
+          <div className="rp-stat-divider" />
+          <div className="rp-stat-item rp-stat-item--pend">
+            <span className="rp-stat-val">{viewPend}</span>
+            <span className="rp-stat-lbl">pendientes</span>
+          </div>
+          <div className="rp-stat-divider" />
+          <div className="rp-stat-item">
+            <span className="rp-stat-val">{viewHours}h</span>
+            <span className="rp-stat-lbl">estimadas</span>
+          </div>
+        </div>
+      )}
+
       {/* ── Leyenda ── */}
       {cursos.length > 0 && (
         <div className="rp-legend">
+          <span className="rp-legend-group-lbl">Cursos</span>
           {cursos.map((c, i) => {
             const col = CURSO_PALETTE[i % CURSO_PALETTE.length];
             return (
-              <span key={c.id} className="rp-legend-item" style={{ borderColor: col.border, color: col.text }}>
+              <span key={c.id} className="rp-legend-item" style={{ color: col.text }}>
                 <span className="rp-legend-dot" style={{ background: col.border }} />
                 {c.nombre}
               </span>
             );
           })}
           <span className="rp-legend-sep" />
-          <span className="rp-legend-item rp-legend-task-easy">
-            <span className="rp-legend-dot" style={{ background: '#3B82F6' }} />Fácil
-          </span>
-          <span className="rp-legend-item rp-legend-task-med">
-            <span className="rp-legend-dot" style={{ background: '#F59E0B' }} />Normal
-          </span>
-          <span className="rp-legend-item rp-legend-task-hard">
-            <span className="rp-legend-dot" style={{ background: '#EF4444' }} />Difícil
-          </span>
+          <span className="rp-legend-group-lbl">Dificultad</span>
+          <span className="rp-legend-item" style={{ color: '#93C5FD' }}><span className="rp-legend-dot" style={{ background: '#3B82F6' }} />Fácil</span>
+          <span className="rp-legend-item" style={{ color: '#FCD34D' }}><span className="rp-legend-dot" style={{ background: '#F59E0B' }} />Normal</span>
+          <span className="rp-legend-item" style={{ color: '#FCA5A5' }}><span className="rp-legend-dot" style={{ background: '#EF4444' }} />Difícil</span>
+          <span className="rp-legend-item" style={{ color: '#BEF264' }}><span className="rp-legend-dot" style={{ background: 'rgba(190,242,100,0.7)' }} />Hecho</span>
         </div>
       )}
 
@@ -292,15 +327,19 @@ export default function Reporte() {
       ) : (
         <div className="rp-scroll">
           <div className="rg" ref={gridRef}>
+
             {/* Header */}
             <div className="rg-head">
               <div className="rg-corner" />
               {days.map(({ date, label }) => {
-                const dStr = dateStr(date);
+                const dStr    = dateStr(date);
+                const isToday = dStr === todayS;
                 return (
-                  <div key={dStr} className={`rg-day-hdr${dStr === todayS ? ' rg-day-hdr--today' : ''}`}>
+                  <div key={dStr} className={`rg-day-hdr${isToday ? ' rg-day-hdr--today' : ''}`}>
                     <span className="rg-day-name">{label}</span>
-                    <span className="rg-day-num">{date.getDate()}</span>
+                    <div className={`rg-day-num-wrap${isToday ? ' rg-day-num-wrap--today' : ''}`}>
+                      <span className="rg-day-num">{date.getDate()}</span>
+                    </div>
                     <span className="rg-day-month">{MESES[date.getMonth()]}</span>
                   </div>
                 );
@@ -318,6 +357,7 @@ export default function Reporte() {
               </div>
               {days.map(({ date, dia }) => renderCol(date, dia))}
             </div>
+
           </div>
         </div>
       )}
@@ -333,6 +373,7 @@ export default function Reporte() {
           <p>Ve a <strong>Mis Tareas</strong>, edita una tarea y activa <em>"Compartida"</em> para que aparezca aquí.</p>
         </div>
       )}
+
     </div>
   );
 }

@@ -12,11 +12,11 @@ const GRID_DUR   = GRID_END - GRID_START;
 const HOURS      = Array.from({ length: 15 }, (_, i) => 7 + i);
 
 const CURSO_PALETTE = [
-  { bg: 'rgba(59,130,246,0.22)',  border: '#3B82F6', text: '#93C5FD' },
-  { bg: 'rgba(245,158,11,0.22)', border: '#F59E0B', text: '#FCD34D' },
-  { bg: 'rgba(239,68,68,0.22)',  border: '#EF4444', text: '#FCA5A5' },
-  { bg: 'rgba(139,92,246,0.22)', border: '#8B5CF6', text: '#C4B5FD' },
-  { bg: 'rgba(6,182,212,0.22)',  border: '#06B6D4', text: '#67E8F9' },
+  { bg: 'rgba(59,130,246,0.22)',  border: '#3B82F6', text: '#93C5FD' },  // azul
+  { bg: 'rgba(16,185,129,0.22)', border: '#10B981', text: '#6EE7B7' },  // esmeralda
+  { bg: 'rgba(249,115,22,0.22)', border: '#F97316', text: '#FDBA74' },  // naranja
+  { bg: 'rgba(217,70,239,0.22)', border: '#D946EF', text: '#F0ABFC' },  // fucsia
+  { bg: 'rgba(250,204,21,0.22)', border: '#FACC15', text: '#FEF08A' },  // amarillo
 ];
 
 function taskColor(dif, done) {
@@ -29,6 +29,11 @@ function taskColor(dif, done) {
 function toMin(t) {
   const [h, m] = t.split(':').map(Number);
   return h * 60 + m;
+}
+function fmtHora(t) {
+  if (!t) return '';
+  const parts = t.split(':');
+  return `${parts[0]}:${parts[1]}`;
 }
 function topPct(min) { return ((min - GRID_START) / GRID_DUR) * 100; }
 function htPct(dur)  { return (dur / GRID_DUR) * 100; }
@@ -96,8 +101,9 @@ export default function Reporte() {
     return () => clearInterval(id);
   }, []);
 
-  const colorMap   = Object.fromEntries(cursos.map((c, i) => [c.id, CURSO_PALETTE[i % CURSO_PALETTE.length]]));
-  const courseById = Object.fromEntries(cursos.map(c => [c.id, c]));
+  const uniqueNames  = [...new Set(cursos.map(c => c.nombre))];
+  const nameColorMap = Object.fromEntries(uniqueNames.map((n, i) => [n, CURSO_PALETTE[i % CURSO_PALETTE.length]]));
+  const colorMap     = Object.fromEntries(cursos.map(c => [c.id, nameColorMap[c.nombre]]));
 
   const shared  = tareas.filter(t => t.compartida);
   const visible = showDone ? shared : shared.filter(t => t.estado !== 'completada');
@@ -142,8 +148,22 @@ export default function Reporte() {
       : [];
     const dayTareas = visible.filter(t => t.fecha_entrega === dStr);
 
+    // Usa los cursos que REALMENTE renderizan hoy como fuente de verdad
+    const dayCursoIds = new Set(dayCursos.map(c => c.id));
+
+const tasksByCurso = {};
+    const floatingTasks = [];
+
+    for (const t of dayTareas) {
+      if (t.curso_id != null && dayCursoIds.has(t.curso_id)) {
+        if (!tasksByCurso[t.curso_id]) tasksByCurso[t.curso_id] = [];
+        tasksByCurso[t.curso_id].push(t);
+      } else {
+        floatingTasks.push(t);
+      }
+    }
+
     let morningOffset = 0;
-    const courseOffsets = {};
 
     return (
       <div key={dStr} className={`rg-col${isToday ? ' rg-col--today' : ''}`}>
@@ -155,56 +175,55 @@ export default function Reporte() {
           <div className="rg-now-line" style={{ top: `${topPct(nowMin)}%` }} />
         )}
 
-        {dayTareas.map(t => {
-          const linkedCurso     = t.curso_id != null ? courseById[t.curso_id] : null;
-          const courseRunsToday = linkedCurso?.curso_dias?.some(d => d.dia === diaNombre);
-
-          let top, ht, inCourse = false;
-
-          if (linkedCurso && courseRunsToday) {
-            const cStart = toMin(linkedCurso.hora_inicio);
-            const cEnd   = toMin(linkedCurso.hora_fin);
-            const cDur   = cEnd - cStart;
-            const cOff   = courseOffsets[t.curso_id] || 0;
-            top      = topPct(cStart + cOff);
-            ht       = Math.max(htPct(Math.min(t.tiempo_estimado, cDur - cOff)), 1.2);
-            courseOffsets[t.curso_id] = cOff + t.tiempo_estimado;
-            inCourse = true;
-          } else {
-            top = topPct(GRID_START + morningOffset);
-            ht  = Math.max(htPct(t.tiempo_estimado), 1.8);
-            morningOffset += t.tiempo_estimado;
-          }
-
+        {/* Tareas sin curso: apiladas desde la mañana */}
+        {floatingTasks.map(t => {
+          const top = topPct(GRID_START + morningOffset);
+          const ht  = Math.max(htPct(t.tiempo_estimado), 1.8);
+          morningOffset += t.tiempo_estimado;
           const col = taskColor(t.dificultad, t.estado === 'completada');
           return (
             <div
               key={`t${t.id}`}
-              className={`rg-task${inCourse ? ' rg-task--in-course' : ''}`}
+              className="rg-task"
               style={{ top: `${top}%`, height: `${ht}%`, background: col.bg, borderColor: col.border, color: col.text }}
               title={t.nombre}
             >
               {t.estado === 'completada' && <span className="rg-check">✓</span>}
-              {inCourse && <span className="rg-deadline-tag">ENT</span>}
               <span className="rg-blk-name">{t.nombre}</span>
               <span className="rg-blk-meta">{t.tiempo_estimado}min · {t.cursos?.nombre ?? ''}</span>
             </div>
           );
         })}
 
+        {/* Cursos con sus tareas anidadas adentro */}
         {dayCursos.map(c => {
           const startMin = toMin(c.hora_inicio);
           const dur      = toMin(c.hora_fin) - startMin;
           const col      = colorMap[c.id] || CURSO_PALETTE[0];
+          const tasks    = tasksByCurso[c.id] || [];
           return (
             <div
               key={`c${c.id}`}
-              className="rg-curso"
+              className={`rg-curso${tasks.length > 0 ? ' rg-curso--has-tasks' : ''}`}
               style={{ top: `${topPct(startMin)}%`, height: `${htPct(dur)}%`, background: col.bg, borderColor: col.border, color: col.text }}
               title={c.nombre}
             >
               <span className="rg-blk-name">{c.nombre}</span>
-              <span className="rg-blk-meta">{c.hora_inicio}–{c.hora_fin}</span>
+              <span className="rg-blk-meta">{fmtHora(c.hora_inicio)}–{fmtHora(c.hora_fin)}</span>
+              {tasks.length > 0 && (
+                <div className="rg-curso-tasks">
+                  {tasks.map(t => (
+                    <div
+                      key={`t${t.id}`}
+                      className={`rg-curso-task${t.estado === 'completada' ? ' rg-curso-task--done' : ''}`}
+                    >
+                      <span className="rg-curso-task-dot" />
+                      <span className="rg-curso-task-name">{t.nombre}</span>
+                      <span className="rg-curso-task-time">{t.tiempo_estimado}m</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
@@ -303,12 +322,12 @@ export default function Reporte() {
       {cursos.length > 0 && (
         <div className="rp-legend">
           <span className="rp-legend-group-lbl">Cursos</span>
-          {cursos.map((c, i) => {
-            const col = CURSO_PALETTE[i % CURSO_PALETTE.length];
+          {uniqueNames.map(name => {
+            const col = nameColorMap[name];
             return (
-              <span key={c.id} className="rp-legend-item" style={{ color: col.text }}>
+              <span key={name} className="rp-legend-item" style={{ color: col.text }}>
                 <span className="rp-legend-dot" style={{ background: col.border }} />
-                {c.nombre}
+                {name}
               </span>
             );
           })}

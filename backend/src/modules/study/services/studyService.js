@@ -103,17 +103,26 @@ function calcularHorasLibres(cursos, bloqueados, dia) {
 
   const minutosDisponibles = FIN_DIA - INICIO_DIA; // 1020 min = 17h
 
+  const cursosDelDia = cursos.filter((c) =>
+    c.curso_dias.some((cd) => cd.dia.toLowerCase() === dia)
+  );
+
   const bloqueadosDelDia = bloqueados.filter((b) =>
     b.horario_bloqueado_dias.some((d) => d.dia.toLowerCase() === dia) &&
     b.tipo !== 'dormir'
   );
+
+  const minutosClases = cursosDelDia.reduce((acc, c) => {
+    const mins = minutosEntre(c.hora_inicio, c.hora_fin);
+    return acc + (mins > 0 ? mins : 0);
+  }, 0);
 
   const minutosBloqueados = bloqueadosDelDia.reduce((acc, b) => {
     const mins = minutosEntre(b.hora_inicio, b.hora_fin);
     return acc + (mins > 0 ? mins : 0);
   }, 0);
 
-  const horasLibres = Math.round((minutosDisponibles - minutosBloqueados) / 60 * 10) / 10;
+  const horasLibres = Math.round((minutosDisponibles - minutosClases - minutosBloqueados) / 60 * 10) / 10;
   return Math.max(horasLibres, 0);
 }
 
@@ -303,18 +312,25 @@ async function generarDia(intensidad = 'normal') {
   const tareasEnCrisis = tareasActualizadas.filter(t => t.veces_postergada >= UMBRAL_ALERTA_ROJA);
   programacion.alertas.push(...tareasEnCrisis.map(t => `ALERTA ROJA: ${t.nombre} lleva ${t.veces_postergada} días sin completarse`));
 
-  // Forzar tiempo_asignado y actividad con los valores reales de la tarea
+  // Forzar actividad con el nombre real; tiempo_asignado solo si la tarea ocupa un único bloque
   const tiempoMap = new Map(tareasActualizadas.map(t => [t.id, t.tiempo_estimado]));
   const nombreMap = new Map(tareasActualizadas.map(t => [t.id, t.nombre]));
+  const bloquesPortarea = new Map();
+  programacion.bloques.forEach(b => {
+    if (!b.tarea_id) return;
+    const id = Number(b.tarea_id);
+    bloquesPortarea.set(id, (bloquesPortarea.get(id) || 0) + 1);
+  });
   programacion.bloques = programacion.bloques.map(b => {
     if (!b.tarea_id) return b;
     const id = Number(b.tarea_id);
     const esperado = tiempoMap.get(id);
     const nombre   = nombreMap.get(id);
+    const unSoloBloque = (bloquesPortarea.get(id) ?? 1) === 1;
     return {
       ...b,
-      ...(esperado != null ? { tiempo_asignado: esperado } : {}),
-      ...(nombre    != null ? { actividad: nombre }        : {}),
+      ...(esperado != null && unSoloBloque ? { tiempo_asignado: esperado } : {}),
+      ...(nombre    != null ? { actividad: nombre } : {}),
     };
   });
 
@@ -407,11 +423,19 @@ async function ejecutarCrisisAction(accion, intensidad = 'normal') {
 
   const horasLibresHoy = calcularHorasLibres(cursos, bloqueados, dia);
 
+  // Para acciones que excluyen las crisis de hoy, no mostrarlas en el prompt
+  // (evita señales opuestas: "las ves en tareas pendientes" vs "no las incluyas")
+  const excluirCrisisDelPrompt = accion === 'diferir_manana' || accion === 'buscar_dia_optimo';
+  const tareasParaPrompt = excluirCrisisDelPrompt
+    ? tareas.filter(t => !tareasCrisis.some(c => c.id === t.id))
+    : tareas;
+  const postergadasParaPrompt = excluirCrisisDelPrompt ? [] : tareasCrisis;
+
   const prompt = construirPrompt({
-    cursos, tareas, bloqueados, fecha, dia,
+    cursos, tareas: tareasParaPrompt, bloqueados, fecha, dia,
     fechaManana, diaManana,
     horasLibresHoy, horasLibresManana,
-    postergadas: tareasCrisis, intensidad,
+    postergadas: postergadasParaPrompt, intensidad,
   }) + instruccionEspecial;
 
   let programacion;
@@ -428,18 +452,25 @@ async function ejecutarCrisisAction(accion, intensidad = 'normal') {
   programacion.alertas = (programacion.alertas || []).filter(a => !a.startsWith('ALERTA ROJA'));
   programacion.alertas.push(...tareasCrisis.map(t => `ALERTA ROJA: ${t.nombre} lleva ${t.veces_postergada} días sin completarse`));
 
-  // Forzar tiempo_asignado y actividad con los valores reales de la tarea
+  // Forzar actividad con el nombre real; tiempo_asignado solo si la tarea ocupa un único bloque
   const tiempoMapCrisis = new Map(tareas.map(t => [t.id, t.tiempo_estimado]));
   const nombreMapCrisis = new Map(tareas.map(t => [t.id, t.nombre]));
+  const bloquesPortareaCrisis = new Map();
+  programacion.bloques.forEach(b => {
+    if (!b.tarea_id) return;
+    const id = Number(b.tarea_id);
+    bloquesPortareaCrisis.set(id, (bloquesPortareaCrisis.get(id) || 0) + 1);
+  });
   programacion.bloques = programacion.bloques.map(b => {
     if (!b.tarea_id) return b;
     const id = Number(b.tarea_id);
     const esperado = tiempoMapCrisis.get(id);
     const nombre   = nombreMapCrisis.get(id);
+    const unSoloBloque = (bloquesPortareaCrisis.get(id) ?? 1) === 1;
     return {
       ...b,
-      ...(esperado != null ? { tiempo_asignado: esperado } : {}),
-      ...(nombre    != null ? { actividad: nombre }        : {}),
+      ...(esperado != null && unSoloBloque ? { tiempo_asignado: esperado } : {}),
+      ...(nombre    != null ? { actividad: nombre } : {}),
     };
   });
 

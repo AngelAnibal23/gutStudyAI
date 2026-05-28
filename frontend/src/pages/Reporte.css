@@ -487,28 +487,56 @@
 }
 .rg-curso:hover { filter: brightness(1.12); }
 
-/* Tarea posicionada sobre su bloque de curso */
-.rg-task--in-course {
-  left: 5px;
-  right: 5px;
-  z-index: 3;
-  border-left-width: 3px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.45);
+/* Tareas anidadas dentro del bloque de curso */
+.rg-curso-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 0.5px solid currentColor;
+  opacity: 0.9;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
-.rg-deadline-tag {
-  font-size: 8px;
+.rg-curso-task {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.rg-curso-task--done {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.rg-curso-task-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.rg-curso-task-name {
+  flex: 1;
+  font-size: 9.5px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.rg-curso-task-time {
   font-family: var(--font-mono);
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  opacity: 0.85;
-  display: inline-block;
-  background: rgba(255,255,255,0.1);
-  border-radius: 2px;
-  padding: 0 3px;
-  width: fit-content;
-  margin-bottom: 1px;
+  font-size: 8.5px;
+  opacity: 0.55;
+  flex-shrink: 0;
 }
 
 /* Texto dentro de bloques */

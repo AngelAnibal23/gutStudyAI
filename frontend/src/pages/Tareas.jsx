@@ -32,17 +32,24 @@ function minutosAHoras(mins) {
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
+function diasHasta(str) {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const entrega = new Date(str + 'T00:00:00');
+  return Math.round((entrega - hoy) / 86400000);
+}
+
 function estadoVariant(t) {
   if (t.estado === 'completada') return 'completada';
-  if (t.veces_postergada >= 3) return 'crisis';
-  const dias = Math.ceil((new Date(t.fecha_entrega + 'T12:00:00') - new Date()) / 86400000);
-  if (dias < 0)  return 'vencida';
+  const dias = diasHasta(t.fecha_entrega);
+  if (dias < 0) return 'vencida';
+  if (t.veces_postergada >= 3 || dias <= 1) return 'crisis';
   if (dias <= 2) return 'en_riesgo';
   return 'pendiente';
 }
 
 function diasLabel(str) {
-  const dias = Math.ceil((new Date(str + 'T12:00:00') - new Date()) / 86400000);
+  const dias = diasHasta(str);
   if (dias < 0) return 'Vencida';
   if (dias === 0) return 'Hoy';
   if (dias === 1) return 'Mañana';

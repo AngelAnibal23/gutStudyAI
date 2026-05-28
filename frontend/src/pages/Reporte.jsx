@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import './Reporte.css';
 
+const API = import.meta.env.VITE_API_URL || '/api';
+
 const DIAS       = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
 const DIAS_LABEL = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
 const MESES      = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -87,8 +89,8 @@ export default function Reporte() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/tareas').then(r => r.json()),
-      fetch('/api/cursos').then(r => r.json()),
+      fetch(`${API}/tareas`).then(r => r.json()),
+      fetch(`${API}/cursos`).then(r => r.json()),
     ]).then(([t, c]) => {
       setTareas(Array.isArray(t) ? t : []);
       setCursos(Array.isArray(c) ? c : []);
@@ -148,10 +150,9 @@ export default function Reporte() {
       : [];
     const dayTareas = visible.filter(t => t.fecha_entrega === dStr);
 
-    // Usa los cursos que REALMENTE renderizan hoy como fuente de verdad
     const dayCursoIds = new Set(dayCursos.map(c => c.id));
 
-const tasksByCurso = {};
+    const tasksByCurso = {};
     const floatingTasks = [];
 
     for (const t of dayTareas) {
